@@ -5,12 +5,23 @@ import subjectsRouter from './routes/subject.js';
 const app = express();
 const port = 8000;
 
-if(!process.env.FRONTEND_URL) {
-  throw new Error('FRONTEND_URL is not set in .env file');
-}
+const allowedOrigins = new Set(
+  [
+    process.env.FRONTEND_URL,
+    'http://localhost:5173',
+    'http://localhost:5174',
+  ].filter((origin): origin is string => Boolean(origin))
+);
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }))
